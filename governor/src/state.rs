@@ -96,6 +96,10 @@ where
         self.state
     }
 
+    pub fn get_state_store(&self) -> &S {
+        &self.state
+    }
+
     /// Returns a reference to the clock.
     pub fn clock(&self) -> &C {
         &self.clock

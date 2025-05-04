@@ -17,7 +17,7 @@ use portable_atomic::AtomicU64;
 /// Internally, the number tracked here is the theoretical arrival time (a GCRA term) in number of
 /// nanoseconds since the rate limiter was created.
 #[derive(Default)]
-pub struct InMemoryState(AtomicU64);
+pub struct InMemoryState(pub AtomicU64);
 
 impl InMemoryState {
     pub(crate) fn measure_and_replace_one<T, F, E>(&self, mut f: F) -> Result<T, E>
@@ -64,6 +64,18 @@ impl Debug for InMemoryState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         let d = Duration::from_nanos(self.0.load(Ordering::Relaxed));
         write!(f, "InMemoryState({:?})", d)
+    }
+}
+
+impl serde::Serialize for InMemoryState {
+    fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
+        ser.serialize_u64(self.0.load(Ordering::Relaxed))
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for InMemoryState {
+    fn deserialize<D: serde::Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
+        Ok(Self(AtomicU64::new(u64::deserialize(de)?)))
     }
 }
 
