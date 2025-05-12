@@ -1,17 +1,21 @@
 //! A time-keeping abstraction (nanoseconds) that works for storing in an atomic integer.
 
-use crate::clock;
+use core::{
+    convert::TryInto,
+    fmt,
+    ops::{Add, Div, Mul},
+    time::Duration,
+};
 
-use core::convert::TryInto;
-use core::fmt;
-use core::ops::{Add, Div, Mul};
-use core::time::Duration;
+use serde::{Deserialize, Serialize};
+
+use crate::clock;
 
 /// A number of nanoseconds from a reference point.
 ///
 /// Nanos can not represent durations >584 years, but hopefully that
 /// should not be a problem in real-world applications.
-#[derive(PartialEq, Eq, Default, Clone, Copy, PartialOrd, Ord)]
+#[derive(PartialEq, Eq, Default, Clone, Copy, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Nanos(u64);
 
 impl Nanos {
@@ -118,8 +122,9 @@ impl Add<Duration> for Nanos {
 
 #[cfg(all(feature = "std", test))]
 mod test {
-    use super::*;
     use std::time::Duration;
+
+    use super::*;
 
     #[test]
     fn nanos_impls() {

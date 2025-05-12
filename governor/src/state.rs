@@ -5,17 +5,17 @@ use core::marker::PhantomData;
 pub mod direct;
 mod in_memory;
 pub mod keyed;
+pub use direct::*;
+use serde::{Deserialize, Serialize};
 
 pub use self::in_memory::InMemoryState;
-
-use crate::nanos::Nanos;
-use crate::{clock, Quota};
 use crate::{
+    clock,
     gcra::Gcra,
     middleware::{NoOpMiddleware, RateLimitingMiddleware},
+    nanos::Nanos,
+    Quota,
 };
-
-pub use direct::*;
 
 /// A way for rate limiters to keep state.
 ///
@@ -53,7 +53,7 @@ pub trait StateStore {
 /// This is the structure that ties together the parameters (how many cells to allow in what time
 /// period) and the concrete state of rate limiting decisions. This crate ships in-memory state
 /// stores, but it's possible (by implementing the [`StateStore`] trait) to make others.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct RateLimiter<K, S, C, MW = NoOpMiddleware>
 where
     S: StateStore<Key = K>,
@@ -140,10 +140,11 @@ where
 
 #[cfg(all(feature = "std", test))]
 mod test {
-    use super::*;
-    use crate::Quota;
     use assertables::assert_gt;
     use nonzero_ext::nonzero;
+
+    use super::*;
+    use crate::Quota;
 
     #[test]
     fn ratelimiter_impl_coverage() {

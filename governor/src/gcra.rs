@@ -1,13 +1,16 @@
-use crate::state::StateStore;
-use crate::InsufficientCapacity;
-use crate::{clock, middleware::StateSnapshot, Quota};
-use crate::{middleware::RateLimitingMiddleware, nanos::Nanos};
-use core::num::NonZeroU32;
-use core::time::Duration;
-use core::{cmp, fmt};
+use core::{cmp, fmt, num::NonZeroU32, time::Duration};
+
+use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "std")]
 use crate::Jitter;
+use crate::{
+    clock,
+    middleware::{RateLimitingMiddleware, StateSnapshot},
+    nanos::Nanos,
+    state::StateStore,
+    InsufficientCapacity, Quota,
+};
 
 /// A negative rate-limiting outcome.
 ///
@@ -74,7 +77,7 @@ impl<P: clock::Reference> fmt::Display for NotUntil<P> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub(crate) struct Gcra {
     /// The "weight" of a single packet in units of time.
     t: Nanos,
@@ -179,11 +182,12 @@ impl Gcra {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::Quota;
     use core::num::NonZeroU32;
 
     use proptest::prelude::*;
+
+    use super::*;
+    use crate::Quota;
 
     /// Exercise derives and convenience impls on Gcra to make coverage happy
     #[cfg(feature = "std")]
@@ -203,10 +207,11 @@ mod test {
     #[cfg(feature = "std")]
     #[test]
     fn notuntil_impls() {
-        use crate::RateLimiter;
         use assertables::assert_gt;
         use clock::FakeRelativeClock;
         use nonzero_ext::nonzero;
+
+        use crate::RateLimiter;
 
         let clock = FakeRelativeClock::default();
         let quota = Quota::per_second(nonzero!(1u32));
